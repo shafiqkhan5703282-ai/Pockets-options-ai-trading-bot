@@ -1,707 +1,343 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pocket Option AI Trading Bot - Full OTC Pairs & 60s Countdown</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkbg: '#080c14',
-                        cardbg: '#101726',
-                        bordercolor: '#1e293b',
-                        accentgreen: '#10b981',
-                        accentred: '#ef4444',
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- FontAwesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Spike AI Trading Bot Interface</title>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #080c14; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #334155; }
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
-            50% { box-shadow: 0 0 35px rgba(16, 185, 129, 0.8); }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .glow-btn { animation: pulse-glow 2s infinite; }
+
+        body {
+            background-color: #0d1117;
+            color: #ffffff;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Simulated Trading Chart Area */
+        .chart-container {
+            flex: 1;
+            background: linear-gradient(135deg, #1b2838 0%, #0d1b2a 100%);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-right: 2px solid #21262d;
+        }
+
+        .watermark {
+            position: absolute;
+            font-size: 8rem;
+            color: rgba(255, 255, 255, 0.03);
+            font-weight: bold;
+            letter-spacing: 5px;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .chart-mockup {
+            width: 80%;
+            height: 60%;
+            border-left: 2px dashed rgba(255,255,255,0.2);
+            border-bottom: 2px dashed rgba(255,255,255,0.2);
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            padding: 10px;
+        }
+
+        .candle {
+            flex: 1;
+            margin: 0 3px;
+            background: #238636;
+            position: relative;
+            transition: height 0.5s ease;
+        }
+
+        .candle.red {
+            background: #da3633;
+        }
+
+        .candle::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            width: 2px;
+            background: inherit;
+            top: -10px;
+            bottom: -10px;
+            transform: translateX(-50%);
+        }
+
+        /* Bot Sidebar Panel */
+        .bot-panel {
+            width: 380px;
+            background-color: #161b22;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #30363d;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+        }
+
+        .bot-header {
+            padding: 15px 20px;
+            background-color: #21262d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .bot-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bot-title span {
+            color: #238636;
+        }
+
+        .bot-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .section-box {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            color: #8b949e;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Market Info & Technical Indicators */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+
+        .info-row span:last-child {
+            font-weight: 600;
+        }
+
+        .signal-display {
+            text-align: center;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-top: 5px;
+        }
+
+        .signal-buy {
+            background-color: rgba(35, 134, 54, 0.2);
+            color: #3fb950;
+            border: 1px solid #238636;
+        }
+
+        .signal-sell {
+            background-color: rgba(218, 54, 51, 0.2);
+            color: #f85149;
+            border: 1px solid #da3633;
+        }
+
+        /* Interactive Controls */
+        .bot-controls {
+            padding: 15px 20px;
+            background-color: #21262d;
+            border-top: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-primary {
+            background-color: #238636;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #30363d;
+            color: #c9d1d9;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 8px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: white;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #3fb950;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #3fb950;
+        }
     </style>
 </head>
-<body class="bg-darkbg text-slate-100 h-screen overflow-hidden flex flex-col">
+<body>
 
-    <header class="bg-cardbg border-b border-bordercolor h-14 flex items-center justify-between px-4 shrink-0 z-20">
-        <div class="flex items-center space-x-3">
-            <div class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold px-3 py-1.5 rounded-lg flex items-center space-x-2 shadow-lg">
-                <i class="fa-solid fa-robot text-lg"></i>
-                <span class="tracking-wider text-sm hidden sm:inline">POCKET OPTION AI PRO</span>
-                <span class="tracking-wider text-sm sm:hidden">AI BOT</span>
-            </div>
-            <span class="hidden md:inline text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full font-medium">
-                <i class="fa-solid fa-circle text-[8px] mr-1.5 animate-pulse"></i> Neural Strategy Engine Active
-            </span>
+    <!-- Simulated Main Screen / Chart -->
+    <div class="chart-container">
+        <div class="watermark">POCKET OPTION</div>
+        <div style="position: absolute; top: 20px; left: 20px; font-size: 1.2rem; font-weight: bold;">
+            EUR/USD OTC <span style="color: #3fb950;">+92%</span>
         </div>
-
-        <div class="flex items-center space-x-4">
-            <div class="bg-slate-900 border border-bordercolor px-3 py-1.5 rounded-lg flex items-center space-x-2 text-xs md:text-sm">
-                <span class="text-slate-400">Balance:</span>
-                <span id="account-balance" class="font-bold text-emerald-400">$96,420.00</span>
-                <button onclick="openDepositModal()" class="ml-2 bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded text-xs font-semibold transition cursor-pointer">
-                    <i class="fa-solid fa-plus"></i> Deposit
-                </button>
-            </div>
-            <div class="flex items-center space-x-2 border-l border-bordercolor pl-4">
-                <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs border border-emerald-500/40">
-                    VIP
-                </div>
-                <span class="hidden lg:inline text-sm font-medium text-slate-300">ProTrader_99</span>
-            </div>
+        <div class="chart-mockup" id="chartMockup">
+            <!-- Dynamic Candles Generated via JS -->
         </div>
-    </header>
-
-    <div class="flex-1 flex overflow-hidden">
-        
-        <!-- Sidebar Navigation -->
-        <aside class="w-16 bg-cardbg border-r border-bordercolor flex flex-col items-center py-4 space-y-6 shrink-0 z-10">
-            <button class="w-10 h-10 rounded-xl bg-slate-800 text-emerald-400 flex items-center justify-center hover:bg-slate-700 transition shadow-sm cursor-pointer" title="Trading Terminal">
-                <i class="fa-solid fa-chart-line text-lg"></i>
-            </button>
-            <button class="w-10 h-10 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition cursor-pointer" title="AI Bot Panel" onclick="focusBotPanel()">
-                <i class="fa-solid fa-bolt text-lg"></i>
-            </button>
-            <button class="w-10 h-10 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition cursor-pointer" title="Trade History Ledger" onclick="scrollToHistory()">
-                <i class="fa-solid fa-clock-rotate-left text-lg"></i>
-            </button>
-            <div class="flex-1"></div>
-            <button class="w-10 h-10 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-slate-800 flex items-center justify-center transition cursor-pointer" title="Platform Settings" onclick="openSettingsModal()">
-                <i class="fa-solid fa-gear text-lg"></i>
-            </button>
-        </aside>
-
-        <!-- Center Workspace: Chart & Market Controls -->
-        <main class="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-darkbg p-3 md:p-4 space-y-3">
-            
-            <!-- Asset Selection & Market Type Bar -->
-            <div class="bg-cardbg border border-bordercolor rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-md">
-                <div class="flex flex-wrap items-center gap-3">
-                    <!-- Market Category Tabs -->
-                    <div class="flex bg-slate-900 p-1 rounded-lg border border-bordercolor">
-                        <button onclick="switchMarketType('otc')" id="tab-otc" class="px-3 py-1.5 text-xs font-bold rounded-md bg-emerald-600 text-white transition cursor-pointer">OTC Pairs</button>
-                        <button onclick="switchMarketType('forex')" id="tab-forex" class="px-3 py-1.5 text-xs font-semibold rounded-md text-slate-400 hover:text-white transition cursor-pointer">Forex Currencies</button>
-                        <button onclick="switchMarketType('crypto')" id="tab-crypto" class="px-3 py-1.5 text-xs font-semibold rounded-md text-slate-400 hover:text-white transition cursor-pointer">Crypto</button>
-                    </div>
-
-                    <!-- Comprehensive Asset Selector Dropdown -->
-                    <div class="relative">
-                        <select id="asset-selector" onchange="updateAssetSelection()" class="bg-slate-900 border border-bordercolor text-slate-200 text-sm rounded-lg px-3 py-2 outline-none focus:border-emerald-500 transition cursor-pointer pr-8">
-                            <!-- Populated dynamically -->
-                        </select>
-                    </div>
-
-                    <!-- Timeframe Selector -->
-                    <select id="timeframe-selector" class="bg-slate-900 border border-bordercolor text-slate-200 text-sm rounded-lg px-3 py-2 outline-none focus:border-emerald-500 transition cursor-pointer">
-                        <option value="1m">1 Minute (1M)</option>
-                        <option value="5m">5 Minutes (5M)</option>
-                        <option value="15m">15 Minutes (15M)</option>
-                    </select>
-                </div>
-
-                <div class="flex items-center space-x-3 text-xs text-slate-400">
-                    <div class="flex items-center space-x-1.5 bg-slate-900 px-3 py-1.5 rounded-lg border border-bordercolor">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                        <span>Payout Rate: <strong id="payout-badge" class="text-emerald-400">92%</strong></span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-cardbg border border-bordercolor rounded-xl p-3 md:p-4 flex-1 min-h-[350px] flex flex-col relative shadow-inner overflow-hidden">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center space-x-2">
-                        <span id="current-chart-title" class="font-bold text-slate-200 text-sm md:text-base">EUR/USD (OTC)</span>
-                        <span class="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Live Stream</span>
-                    </div>
-                    <div class="flex items-center space-x-3 text-xs font-mono">
-                        <span class="text-slate-400 hidden sm:inline">High: <strong id="chart-high" class="text-slate-200">1.08452</strong></span>
-                        <span class="text-slate-400 hidden sm:inline">Low: <strong id="chart-low" class="text-slate-200">1.08310</strong></span>
-                        <span class="text-emerald-400 font-bold text-sm bg-slate-900 px-2.5 py-1 rounded border border-bordercolor" id="live-price">1.08394</span>
-                    </div>
-                </div>
-                
-                <!-- Canvas Chart Container -->
-                <div class="flex-1 relative w-full h-full min-h-[280px]">
-                    <canvas id="trading-canvas" class="w-full h-full rounded-lg cursor-crosshair"></canvas>
-                </div>
-
-                <!-- Overlay indicator & trend status badge -->
-                <div class="absolute bottom-6 left-6 bg-slate-900/90 backdrop-blur border border-bordercolor p-2.5 rounded-lg text-xs space-y-1 pointer-events-none hidden sm:block shadow-lg">
-                    <div class="text-slate-400">Active Indicators: <span class="text-emerald-400 font-medium">RSI (14), EMA (20/50), Stochastic (14,3,3)</span></div>
-                    <div class="text-slate-400">AI Momentum Scanner: <span id="ai-pattern-status" class="text-teal-400 font-bold">Scanning Order Book & Volatility...</span></div>
-                </div>
-            </div>
-
-            <!-- Session Stats Bar -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="bg-cardbg border border-bordercolor rounded-xl p-3 flex items-center justify-between shadow-sm">
-                    <div>
-                        <div class="text-xs text-slate-400">Strategy Accuracy</div>
-                        <div class="text-lg font-bold text-emerald-400">96.8%</div>
-                    </div>
-                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
-                        <i class="fa-solid fa-bullseye"></i>
-                    </div>
-                </div>
-                <div class="bg-cardbg border border-bordercolor rounded-xl p-3 flex items-center justify-between shadow-sm">
-                    <div>
-                        <div class="text-xs text-slate-400">Signals Generated Today</div>
-                        <div class="text-lg font-bold text-slate-200">42 Signals</div>
-                    </div>
-                    <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/20">
-                        <i class="fa-solid fa-microchip"></i>
-                    </div>
-                </div>
-                <div class="bg-cardbg border border-bordercolor rounded-xl p-3 flex items-center justify-between shadow-sm">
-                    <div>
-                        <div class="text-xs text-slate-400">Session Net Profit</div>
-                        <div class="text-lg font-bold text-emerald-400">+$14,280.00</div>
-                    </div>
-                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
-                        <i class="fa-solid fa-wallet"></i>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <aside id="bot-panel" class="w-full md:w-96 bg-cardbg border-l border-bordercolor flex flex-col p-4 shrink-0 overflow-y-auto custom-scrollbar">
-            
-            <div class="flex items-center justify-between pb-3 border-b border-bordercolor mb-4">
-                <div class="flex items-center space-x-2">
-                    <div class="bg-emerald-500/20 text-emerald-400 p-2 rounded-lg border border-emerald-500/30">
-                        <i class="fa-solid fa-robot text-lg"></i>
-                    </div>
-                    <div>
-                        <h2 class="font-bold text-sm text-slate-100">Pocket Option AI Bot</h2>
-                        <p class="text-xs text-slate-400">Real-Time Binary Signal Engine</p>
-                    </div>
-                </div>
-                <span class="relative flex h-3 w-3">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                </span>
-            </div>
-
-            <!-- Bot Settings Configuration -->
-            <div class="space-y-3.5 mb-4">
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Trade Investment Amount ($)</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">$</span>
-                        <input type="number" id="trade-amount" value="100" min="1" max="50000" class="w-full bg-slate-900 border border-bordercolor rounded-lg py-2 pl-8 pr-3 text-slate-200 text-sm outline-none focus:border-emerald-500 transition">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">AI Trading Strategy</label>
-                    <select id="strategy-selector" class="w-full bg-slate-900 border border-bordercolor text-slate-200 text-sm rounded-lg px-3 py-2 outline-none focus:border-emerald-500 transition cursor-pointer">
-                        <option value="smart-trend">Smart Trend Reversal + RSI (Video #1 Match)</option>
-                        <option value="rsi-scalp">RSI Oversold/Overbought 1-Min Scalper</option>
-                        <option value="macd-momentum">MACD Momentum Breakout Strategy</option>
-                        <option value="bollinger-bounce">Bollinger Band Volatility Rejection</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- GET A SIGNAL Button (Video centerpiece) -->
-            <div class="mb-4">
-                <button id="get-signal-btn" onclick="triggerAISignal()" class="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg glow-btn flex items-center justify-center space-x-2 transition transform active:scale-95 cursor-pointer">
-                    <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
-                    <span class="tracking-wider text-sm">GET A SIGNAL</span>
-                </button>
-            </div>
-
-            <!-- AI Processing Loading Indicator -->
-            <div id="ai-loading-state" class="hidden bg-slate-900/90 border border-bordercolor rounded-xl p-4 text-center space-y-3 mb-4 animate-pulse shadow-lg">
-                <div class="inline-block animate-spin text-emerald-400 text-2xl">
-                    <i class="fa-solid fa-spinner"></i>
-                </div>
-                <div class="text-xs text-slate-300 font-medium" id="loading-step-text">Connecting to Pocket Option WebSocket API...</div>
-                <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                    <div id="loading-progress" class="bg-emerald-500 h-1.5 rounded-full w-1/4 transition-all duration-300"></div>
-                </div>
-            </div>
-
-            <!-- AI Signal Result & 60s Countdown Box -->
-            <div id="ai-result-card" class="hidden bg-gradient-to-b from-slate-900 to-slate-950 border border-bordercolor rounded-xl p-4 space-y-3.5 shadow-xl mb-4">
-                <div class="flex items-center justify-between pb-2 border-b border-bordercolor">
-                    <span class="text-xs text-slate-400 font-semibold" id="result-asset-label">EUR/USD (OTC)</span>
-                    <span class="text-xs bg-teal-500/10 text-teal-400 border border-teal-500/20 px-2 py-0.5 rounded font-mono" id="result-time-label">1 Min Expiration</span>
-                </div>
-
-                <!-- Signal Action Badge -->
-                <div id="signal-badge-container" class="text-center py-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex flex-col items-center justify-center space-y-1">
-                    <span class="text-[11px] uppercase tracking-widest text-slate-400 font-medium">Recommended AI Signal</span>
-                    <span id="signal-action-text" class="text-2xl font-black text-emerald-400 tracking-wider">CALL 🟢 (UP)</span>
-                    <span id="signal-risk-text" class="text-[11px] text-emerald-300 font-semibold">Low Risk • 98.6% Confidence</span>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div class="bg-slate-900 p-2.5 rounded-lg border border-bordercolor">
-                        <span class="text-slate-400 block text-[10px]">RSI Indicator</span>
-                        <strong id="stat-rsi" class="text-slate-200">22.4 (Oversold)</strong>
-                    </div>
-                    <div class="bg-slate-900 p-2.5 rounded-lg border border-bordercolor">
-                        <span class="text-slate-400 block text-[10px]">Stochastic / MACD</span>
-                        <strong id="stat-momentum" class="text-emerald-400">Bullish Crossover</strong>
-                    </div>
-                </div>
-
-                <!-- 60s to 1s Live Countdown Timer Box (Auto triggered on signal generation) -->
-                <div id="trade-timer-box" class="bg-slate-900 border border-bordercolor rounded-xl p-3 text-center space-y-2">
-                    <div class="text-xs text-slate-400">Active Trade Countdown (60s -> 1s)</div>
-                    <div id="countdown-timer" class="text-2xl font-mono font-bold text-amber-400">01:00</div>
-                    <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-                        <div id="timer-progress" class="bg-amber-400 h-2 rounded-full w-full transition-all duration-1000"></div>
-                    </div>
-                </div>
-
-                <!-- Manual override buttons -->
-                <div class="grid grid-cols-2 gap-2 pt-1">
-                    <button onclick="executeManualTrade('CALL')" class="bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/50 text-emerald-400 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center space-x-1 transition cursor-pointer">
-                        <i class="fa-solid fa-arrow-trend-up"></i>
-                        <span>HIGHER (CALL)</span>
-                    </button>
-                    <button onclick="executeManualTrade('PUT')" class="bg-red-600/20 hover:bg-red-600/30 border border-red-500/50 text-red-400 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center space-x-1 transition cursor-pointer">
-                        <i class="fa-solid fa-arrow-trend-down"></i>
-                        <span>LOWER (PUT)</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Trade History Ledger -->
-            <div class="flex-1 flex flex-col min-h-[220px]">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Executed Trades Ledger</span>
-                    <span class="text-[10px] text-emerald-400 font-medium">Real-time sync</span>
-                </div>
-                <div id="history-ledger-list" class="space-y-2 overflow-y-auto flex-1 custom-scrollbar pr-1">
-                    <!-- Populated via JS -->
-                </div>
-            </div>
-
-        </aside>
-
     </div>
 
-    <div id="custom-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-cardbg border border-bordercolor rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
-            <div class="flex items-center justify-between">
-                <h3 id="modal-title" class="font-bold text-lg text-slate-100">Top Up Trading Balance</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+    <!-- Spike AI Bot Panel -->
+    <div class="bot-panel">
+        <div class="bot-header">
+            <div class="bot-title">
+                <span class="status-indicator"></span> Spike Bot <span>v4.1</span>
             </div>
-            <p id="modal-body" class="text-xs text-slate-300 leading-relaxed">Select virtual deposit amount to replenish your Pocket Option AI Pro trading account instantly.</p>
-            <div id="modal-content-body" class="space-y-3">
-                <div class="grid grid-cols-3 gap-2">
-                    <button onclick="addBalance(1000)" class="bg-slate-900 border border-bordercolor hover:border-emerald-500 p-3 rounded-xl text-center text-sm font-bold text-slate-200 transition cursor-pointer">+$1,000</button>
-                    <button onclick="addBalance(5000)" class="bg-slate-900 border border-bordercolor hover:border-emerald-500 p-3 rounded-xl text-center text-sm font-bold text-slate-200 transition cursor-pointer">+$5,000</button>
-                    <button onclick="addBalance(10000)" class="bg-slate-900 border border-bordercolor hover:border-emerald-500 p-3 rounded-xl text-center text-sm font-bold text-slate-200 transition cursor-pointer">+$10,000</button>
+            <div style="font-size: 0.8rem; color: #8b949e;" id="currentTime">18:00:00</div>
+        </div>
+
+        <div class="bot-body">
+            <!-- Config Selection -->
+            <div class="section-box">
+                <div class="section-title">Bot Configuration</div>
+                <label style="font-size: 0.8rem; color: #8b949e;">Market Type:</label>
+                <select id="marketType">
+                    <option value="OTC">OTC Market</option>
+                    <option value="Stock">Stock Market</option>
+                </select>
+                
+                <label style="font-size: 0.8rem; color: #8b949e; margin-top: 8px; display:block;">Currency Pair:</label>
+                <select id="currencyPair">
+                    <option value="EUR/USD OTC">EUR/USD OTC</option>
+                    <option value="GBP/USD OTC">GBP/USD OTC</option>
+                    <option value="AUD/NZD OTC">AUD/NZD OTC</option>
+                    <option value="USD/JPY OTC">USD/JPY OTC</option>
+                </select>
+
+                <label style="font-size: 0.8rem; color: #8b949e; margin-top: 8px; display:block;">Expiration Time:</label>
+                <select id="expTime">
+                    <option value="1 minute">1 Minute</option>
+                    <option value="5 seconds">5 Seconds</option>
+                    <option value="5 minutes">5 Minutes</option>
+                </select>
+            </div>
+
+            <!-- Market Analysis Data -->
+            <div class="section-box">
+                <div class="section-title">Technical Overview</div>
+                <div class="info-row"><span>Volatility:</span> <span id="volatilityVal" style="color: #3fb950;">Above Average</span></div>
+                <div class="info-row"><span>RSI Analysis:</span> <span id="rsiVal">Optimal (48%)</span></div>
+                <div class="info-row"><span>MACD Status:</span> <span id="macdVal" style="color: #3fb950;">Bullish pressure</span></div>
+                <div class="info-row"><span>Moving Average:</span> <span id="maVal">Support test</span></div>
+            </div>
+
+            <!-- Signal Generation Output -->
+            <div class="section-box">
+                <div class="section-title">AI Signal Engine</div>
+                <div id="signalOutput" class="signal-display signal-buy">BUY</div>
+                <div style="text-align: center; margin-top: 8px; font-size: 0.85rem; color: #8b949e;">
+                    Signal Strength: <strong style="color: #fff;" id="signalStrength">90% (Optimal)</strong>
                 </div>
             </div>
-            <div class="flex justify-end pt-2">
-                <button onclick="closeModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer">Close</button>
-            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="bot-controls">
+            <button class="btn btn-primary" onclick="triggerNewSignal()">Request Another Signal</button>
+            <button class="btn btn-secondary" onclick="resetBotConfig()">Reset Parameters</button>
         </div>
     </div>
 
     <script>
-        // Comprehensive Asset Database matching Pocket Option OTC & Forex pairs
-        const assetDatabase = {
-            otc: [
-                { symbol: "EUR/USD (OTC)", payout: "92%" },
-                { symbol: "GBP/USD (OTC)", payout: "90%" },
-                { symbol: "AUD/USD (OTC)", payout: "88%" },
-                { symbol: "USD/JPY (OTC)", payout: "91%" },
-                { symbol: "EUR/JPY (OTC)", payout: "89%" },
-                { symbol: "GBP/JPY (OTC)", payout: "87%" },
-                { symbol: "EUR/GBP (OTC)", payout: "88%" },
-                { symbol: "NZD/USD (OTC)", payout: "86%" },
-                { symbol: "USD/CAD (OTC)", payout: "89%" },
-                { symbol: "USD/CHF (OTC)", payout: "85%" },
-                { symbol: "AUD/CAD (OTC)", payout: "84%" },
-                { symbol: "EUR/AUD (OTC)", payout: "85%" },
-                { symbol: "GBP/AUD (OTC)", payout: "86%" },
-                { symbol: "CAD/JPY (OTC)", payout: "88%" },
-                { symbol: "CHF/JPY (OTC)", payout: "84%" },
-                { symbol: "EUR/NZD (OTC)", payout: "85%" },
-                { symbol: "GBP/NZD (OTC)", payout: "83%" }
-            ],
-            forex: [
-                { symbol: "EUR/USD", payout: "85%" },
-                { symbol: "GBP/USD", payout: "82%" },
-                { symbol: "USD/JPY", payout: "85%" },
-                { symbol: "AUD/USD", payout: "80%" },
-                { symbol: "USD/CAD", payout: "82%" },
-                { symbol: "NZD/USD", payout: "78%" },
-                { symbol: "USD/CHF", payout: "80%" }
-            ],
-            crypto: [
-                { symbol: "BTC/USD (Crypto)", payout: "95%" },
-                { symbol: "ETH/USD (Crypto)", payout: "92%" },
-                { symbol: "LTC/USD (Crypto)", payout: "88%" },
-                { symbol: "XRP/USD (Crypto)", payout: "87%" },
-                { symbol: "SOL/USD (Crypto)", payout: "90%" }
-            ]
-        };
+        // Live Clock Update
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('currentTime').innerText = now.toTimeString().split(' ')[0];
+        }, 1000);
 
-        // Global State variables
-        let currentMarket = 'otc';
-        let userBalance = 96420.00;
-        let activeCountdownInterval = null;
-        let tradeLedgerData = [
-            { asset: 'EUR/USD (OTC)', type: 'CALL', amount: 100, result: 'WIN', profit: '+$92.00', time: '1 min ago' },
-            { asset: 'GBP/USD (OTC)', type: 'PUT', amount: 250, result: 'WIN', profit: '+$225.00', time: '8 mins ago' },
-            { asset: 'BTC/USD (Crypto)', type: 'CALL', amount: 500, result: 'WIN', profit: '+$475.00', time: '15 mins ago' }
-        ];
-
-        // Initialize application on window load
-        window.onload = function() {
-            populateAssetSelector('otc');
-            initTradingCanvas();
-            renderTradeLedger();
-        };
-
-        // Switch Market Type (OTC / Forex / Crypto)
-        function switchMarketType(type) {
-            currentMarket = type;
-            document.getElementById('tab-otc').className = type === 'otc' ? 'px-3 py-1.5 text-xs font-bold rounded-md bg-emerald-600 text-white transition cursor-pointer' : 'px-3 py-1.5 text-xs font-semibold rounded-md text-slate-400 hover:text-white transition cursor-pointer';
-            document.getElementById('tab-forex').className = type === 'forex' ? 'px-3 py-1.5 text-xs font-bold rounded-md bg-emerald-600 text-white transition cursor-pointer' : 'px-3 py-1.5 text-xs font-semibold rounded-md text-slate-400 hover:text-white transition cursor-pointer';
-            document.getElementById('tab-crypto').className = type === 'crypto' ? 'px-3 py-1.5 text-xs font-bold rounded-md bg-emerald-600 text-white transition cursor-pointer' : 'px-3 py-1.5 text-xs font-semibold rounded-md text-slate-400 hover:text-white transition cursor-pointer';
-            
-            populateAssetSelector(type);
-        }
-
-        // Populate dropdown with all pairs
-        function populateAssetSelector(type) {
-            const selector = document.getElementById('asset-selector');
-            selector.innerHTML = '';
-            const pairs = assetDatabase[type];
-            pairs.forEach(pair => {
-                const opt = document.createElement('option');
-                opt.value = pair.symbol;
-                opt.text = `${pair.symbol} (Payout: ${pair.payout})`;
-                selector.appendChild(opt);
-            });
-            updateAssetSelection();
-        }
-
-        // Update selected asset title and payout
-        function updateAssetSelection() {
-            const selector = document.getElementById('asset-selector');
-            const selectedVal = selector.value;
-            document.getElementById('current-chart-title').innerText = selectedVal;
-            
-            // Extract payout
-            for(let key in assetDatabase) {
-                let found = assetDatabase[key].find(p => p.symbol === selectedVal);
-                if(found) {
-                    document.getElementById('payout-badge').innerText = found.payout;
-                    break;
-                }
+        // Generate Simulated Candles
+        const chartMockup = document.getElementById('chartMockup');
+        function initChart() {
+            chartMockup.innerHTML = '';
+            for (let i = 0; i < 25; i++) {
+                const candle = document.createElement('div');
+                candle.className = 'candle' + (Math.random() > 0.5 ? ' red' : '');
+                candle.style.height = (Math.floor(Math.random() * 70) + 20) + '%';
+                chartMockup.appendChild(candle);
             }
         }
+        initChart();
 
-        // Modal Controls
-        function openDepositModal() {
-            document.getElementById('custom-modal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('custom-modal').classList.add('hidden');
-        }
-
-        function addBalance(amount) {
-            userBalance += amount;
-            document.getElementById('account-balance').innerText = '$' + userBalance.toLocaleString('en-US', {minimumFractionDigits: 2});
-            closeModal();
-        }
-
-        function openSettingsModal() {
-            openDepositModal();
-        }
-
-        function focusBotPanel() {
-            document.getElementById('bot-panel').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function scrollToHistory() {
-            document.getElementById('history-ledger-list').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Interactive Canvas Candlestick & Price Chart
-        function initTradingCanvas() {
-            const canvas = document.getElementById('trading-canvas');
-            const ctx = canvas.getContext('2d');
-            
-            function resizeCanvas() {
-                canvas.width = canvas.parentElement.clientWidth;
-                canvas.height = canvas.parentElement.clientHeight - 40;
-            }
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
-
-            let prices = [];
-            let basePrice = 1.08394;
-            for(let i=0; i<70; i++) {
-                basePrice += (Math.random() - 0.48) * 0.0012;
-                prices.push(basePrice);
-            }
-
-            function drawChart() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                // Draw grid lines
-                ctx.strokeStyle = '#1e293b';
-                ctx.lineWidth = 1;
-                for(let i=0; i<canvas.width; i+=45) {
-                    ctx.beginPath();
-                    ctx.moveTo(i, 0);
-                    ctx.lineTo(i, canvas.height);
-                    ctx.stroke();
-                }
-                for(let j=0; j<canvas.height; j+=35) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, j);
-                    ctx.lineTo(canvas.width, j);
-                    ctx.stroke();
-                }
-
-                // Simulate new price tick
-                let lastPrice = prices[prices.length - 1];
-                let newPrice = lastPrice + (Math.random() - 0.49) * 0.0009;
-                prices.push(newPrice);
-                if(prices.length > 90) prices.shift();
-
-                document.getElementById('live-price').innerText = newPrice.toFixed(5);
-                let maxP = Math.max(...prices);
-                let minP = Math.min(...prices);
-                document.getElementById('chart-high').innerText = maxP.toFixed(5);
-                document.getElementById('chart-low').innerText = minP.toFixed(5);
-
-                // Draw price wave curve
-                ctx.strokeStyle = '#10b981';
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                
-                let stepX = canvas.width / (prices.length - 1);
-                prices.forEach((p, index) => {
-                    let x = index * stepX;
-                    let y = canvas.height - ((p - minP) / (maxP - minP || 0.001)) * (canvas.height - 40) - 20;
-                    if(index === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                });
-                ctx.stroke();
-
-                // Gradient fill under curve
-                ctx.lineTo(canvas.width, canvas.height);
-                ctx.lineTo(0, canvas.height);
-                ctx.fillStyle = 'rgba(16, 185, 129, 0.06)';
-                ctx.fill();
-
-                requestAnimationFrame(() => {
-                    setTimeout(drawChart, 140);
-                });
-            }
-            drawChart();
-        }
-
-        // Trigger AI Signal Generation (Replicating Video Workflow & Starting 60s Countdown)
-        function triggerAISignal() {
-            const btn = document.getElementById('get-signal-btn');
-            const loadingState = document.getElementById('ai-loading-state');
-            const resultCard = document.getElementById('ai-result-card');
-            const loadingText = document.getElementById('loading-step-text');
-            const progressBar = document.getElementById('loading-progress');
-
-            btn.disabled = true;
-            btn.classList.add('opacity-50', 'cursor-not-allowed');
-            resultCard.classList.add('hidden');
-            loadingState.classList.remove('hidden');
-
-            let steps = [
-                "Analyzing candlestick momentum & volatility...",
-                "Running RSI and Stochastic oscillator cross check...",
-                "Connecting to OTC liquidity feeds...",
-                "High-accuracy AI signal generated!"
+        // Simulate Dynamic Analysis & Signals matching video functionality ([00:00:27])
+        function triggerNewSignal() {
+            initChart();
+            const signals = [
+                { type: 'BUY', class: 'signal-buy', strength: '92% (Optimal)', rsi: 'Optimal (45%)', macd: 'Bullish pressure' },
+                { type: 'SELL', class: 'signal-sell', strength: '85% (High)', rsi: 'Overbought (78%)', macd: 'Bearish divergence' },
+                { type: 'BUY', class: 'signal-buy', strength: '88% (Strong)', rsi: 'Oversold (22%)', macd: 'Bullish crossover' }
             ];
-
-            let stepIdx = 0;
-            progressBar.style.width = '25%';
-
-            let interval = setInterval(() => {
-                stepIdx++;
-                if(stepIdx < steps.length) {
-                    loadingText.innerText = steps[stepIdx];
-                    progressBar.style.width = ((stepIdx + 1) * 25) + '%';
-                } else {
-                    clearInterval(interval);
-                    loadingState.classList.add('hidden');
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    
-                    // Display signal and instantly trigger the 60s countdown
-                    displayAISignalResult();
-                }
-            }, 500);
-        }
-
-        // Display Generated Signal and Start 60s Timer
-        function displayAISignalResult() {
-            const resultCard = document.getElementById('ai-result-card');
-            const selectedAsset = document.getElementById('asset-selector').value;
             
-            document.getElementById('result-asset-label').innerText = selectedAsset;
-            document.getElementById('result-time-label').innerText = '1 Min Expiration (60s)';
-
-            const isCall = Math.random() > 0.35; // Bias towards high win rate like the video
-            const badgeContainer = document.getElementById('signal-badge-container');
-            const actionSpan = document.getElementById('signal-action-text');
-            const riskSpan = document.getElementById('signal-risk-text');
-
-            let actionType = isCall ? 'CALL' : 'PUT';
-
-            if(isCall) {
-                badgeContainer.className = 'text-center py-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex flex-col items-center justify-center space-y-1';
-                actionSpan.className = 'text-2xl font-black text-emerald-400 tracking-wider';
-                actionSpan.innerText = 'CALL 🟢 (UP)';
-                riskSpan.className = 'text-[11px] text-emerald-300 font-semibold';
-                riskSpan.innerText = 'Low Risk • 98.4% Accuracy';
-                document.getElementById('stat-rsi').innerText = '21.5 (Oversold Bounce)';
-                document.getElementById('stat-momentum').innerText = 'Bullish Crossover Wave';
-            } else {
-                badgeContainer.className = 'text-center py-3.5 rounded-xl border border-red-500/30 bg-red-500/10 flex flex-col items-center justify-center space-y-1';
-                actionSpan.className = 'text-2xl font-black text-red-400 tracking-wider';
-                actionSpan.innerText = 'PUT 🔴 (DOWN)';
-                riskSpan.className = 'text-[11px] text-red-300 font-semibold';
-                riskSpan.innerText = 'Low Risk • 97.1% Accuracy';
-                document.getElementById('stat-rsi').innerText = '79.2 (Overbought Rejection)';
-                document.getElementById('stat-momentum').innerText = 'Bearish Pullback Wave';
-            }
-
-            resultCard.classList.remove('hidden');
-
-            // Deduct investment amount and start 60s countdown timer
-            const amount = parseFloat(document.getElementById('trade-amount').value) || 100;
-            if(userBalance < amount) {
-                openDepositModal();
-                return;
-            }
-
-            userBalance -= amount;
-            document.getElementById('account-balance').innerText = '$' + userBalance.toLocaleString('en-US', {minimumFractionDigits: 2});
-
-            // Start 60 second countdown timer
-            startCountdown(60, actionType, amount);
-        }
-
-        // Execute Manual Trade with 60s Countdown
-        function executeManualTrade(actionType) {
-            const amount = parseFloat(document.getElementById('trade-amount').value) || 100;
-            if(userBalance < amount) {
-                openDepositModal();
-                return;
-            }
-
-            userBalance -= amount;
-            document.getElementById('account-balance').innerText = '$' + userBalance.toLocaleString('en-US', {minimumFractionDigits: 2});
-
-            startCountdown(60, actionType, amount);
-        }
-
-        // Active Trade Countdown (60s to 1s)
-        function startCountdown(seconds, actionType, amount) {
-            if(activeCountdownInterval) clearInterval(activeCountdownInterval);
+            const randomSignal = signals[Math.floor(Math.random() * signals.length)];
+            const signalBox = document.getElementById('signalOutput');
             
-            let timeLeft = seconds;
-            const timerDisplay = document.getElementById('countdown-timer');
-            const timerProgress = document.getElementById('timer-progress');
-
-            activeCountdownInterval = setInterval(() => {
-                let mins = Math.floor(timeLeft / 60);
-                let secs = timeLeft % 60;
-                timerDisplay.innerText = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
-                
-                let pct = (timeLeft / seconds) * 100;
-                timerProgress.style.width = pct + '%';
-
-                if(timeLeft <= 0) {
-                    clearInterval(activeCountdownInterval);
-                    timerDisplay.innerText = "TRADE EXPIRED";
-                    finalizeTradeResult(actionType, amount);
-                }
-                timeLeft--;
-            }, 1000);
+            signalBox.className = `signal-display ${randomSignal.class}`;
+            signalBox.innerText = randomSignal.type;
+            document.getElementById('signalStrength').innerText = randomSignal.strength;
+            document.getElementById('rsiVal').innerText = randomSignal.rsi;
+            document.getElementById('macdVal').innerText = randomSignal.macd;
         }
 
-        // Finalize Trade Result and Update Ledger
-        function finalizeTradeResult(actionType, amount) {
-            const isWin = Math.random() > 0.22; // ~78% win rate simulation
-            const asset = document.getElementById('asset-selector').value;
-            
-            // Extract payout percentage number
-            let payoutStr = document.getElementById('payout-badge').innerText;
-            let payoutRatio = parseFloat(payoutStr) / 100 || 0.90;
-
-            let profitAmount = isWin ? (amount * payoutRatio) : -amount;
-            if(isWin) {
-                userBalance += (amount + profitAmount);
-            }
-            document.getElementById('account-balance').innerText = '$' + userBalance.toLocaleString('en-US', {minimumFractionDigits: 2});
-
-            tradeLedgerData.unshift({
-                asset: asset,
-                type: actionType,
-                amount: amount,
-                result: isWin ? 'WIN' : 'LOSS',
-                profit: (isWin ? '+$' : '-$') + Math.abs(profitAmount).toFixed(2),
-                time: 'Just now'
-            });
-
-            renderTradeLedger();
-        }
-
-        // Render Ledger List
-        function renderTradeLedger() {
-            const ledgerContainer = document.getElementById('history-ledger-list');
-            ledgerContainer.innerHTML = '';
-
-            tradeLedgerData.forEach(item => {
-                const isWin = item.result === 'WIN';
-                const card = document.createElement('div');
-                card.className = 'bg-slate-900 border border-bordercolor rounded-xl p-2.5 flex items-center justify-between text-xs';
-                card.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                        <span class="w-2 h-2 rounded-full ${isWin ? 'bg-emerald-500' : 'bg-red-500'}"></span>
-                        <div>
-                            <div class="font-bold text-slate-200">${item.asset}</div>
-                            <div class="text-[10px] text-slate-400">${item.type} • $${item.amount} • ${item.time}</div>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <div class="font-bold ${isWin ? 'text-emerald-400' : 'text-red-400'}">${item.profit}</div>
-                        <div class="text-[10px] uppercase font-semibold text-slate-400">${item.result}</div>
-                    </div>
-                `;
-                ledgerContainer.appendChild(card);
-            });
+        function resetBotConfig() {
+            document.getElementById('marketType').selectedIndex = 0;
+            document.getElementById('currencyPair').selectedIndex = 0;
+            document.getElementById('expTime').selectedIndex = 0;
+            triggerNewSignal();
         }
     </script>
 </body>
